@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="htmlPage">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubyred Transportation - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="pic/logooo.png">
+
+    <style>
+        /* --- Dark Mode (Default) --- */
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --header-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --brand-dark: #ffffff;
+            --primary: #2563eb;
+            --brand-red: #d80f0f;
+            --radius: 20px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- Light Mode Toggle --- */
+        [data-theme="light"] {
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --header-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --brand-dark: #1e293b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        header {
+            background: var(--header-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .logo-section img { max-width: 50px; height: auto; }
+        .logo-section h2 { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--brand-dark); }
+        .logo-section h2 span { color: var(--brand-red); }
+
+        .controls { display: flex; align-items: center; gap: 8px; }
+
+        #langSelect, .theme-toggle, .back-btn {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Cairo';
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover { background: var(--brand-red); color: white; border-color: var(--brand-red); }
+
+        .header-main-content { text-align: center; }
+        .header-main-content h1 { font-size: 1.8rem; margin: 10px 0; }
+
+        /* Grid Layout */
+        .routes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card Styling */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: 0.3s ease;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--brand-red);
+            box-shadow: 0 20px 25px -5px rgba(216, 15, 15, 0.2);
+        }
+
+        .card-header { 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            color: var(--brand-red); 
+            margin-bottom: 15px; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 8px; 
+        }
+
+        .stat-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 10px; 
+            font-size: 0.95rem; 
+            border-bottom: 1px dashed var(--border-color); 
+            padding-bottom: 5px; 
+        }
+
+        .cost-tag { 
+            background: rgba(216, 15, 15, 0.1); 
+            padding: 12px; 
+            border-radius: 12px; 
+            margin-top: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            font-weight: 800; 
+            color: var(--brand-red); 
+        }
+
+        /* Modal & Table Styling */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.8); 
+            backdrop-filter: blur(8px); 
+            z-index: 1000; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+        }
+        .modal-content { 
+            background: var(--card-bg); 
+            width: 100%; 
+            max-width: 1000px; 
+            border-radius: 24px; 
+            max-height: 85vh; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            color: var(--text-main); 
+        }
+        .modal-header { 
+            padding: 20px 30px; 
+            background: var(--brand-red); 
+            color: white; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .modal-body { padding: 0; overflow-x: auto; overflow-y: auto; min-height: 300px; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 600px; text-align: inherit; }
+        th { background: rgba(0,0,0,0.2); padding: 15px 20px; font-weight: 700; border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 5; }
+        td { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+        tr:hover { background: rgba(255,255,255,0.05); }
+        
+        .close-btn { background: none; border: none; color: white; font-size: 2.5rem; cursor: pointer; line-height: 1; }
+
+        /* Responsive Settings */
+        @media (max-width: 600px) {
+            .header-top { justify-content: center; }
+            .header-main-content h1 { font-size: 1.4rem; }
+            .routes-grid { grid-template-columns: 1fr; }
+            .controls { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .back-btn span { display: none; }
+            .back-btn::after { content: 'Back'; }
+        }
+    </style>
+</head>
+<body id="bodyTag">
+
+<div class="container">
+    <header>
+        <div class="header-top">
+            <div class="logo-section">
+                <img src="pic/logooo.png" alt="RubyRed Logo">
+                <h2>RUBY<span>RED</span> GARMENT</h2>
+            </div>
+            <div class="controls">
+                <a href="index.html" class="back-btn" id="backLink">
+                    <span id="btnBackText">⬅ Back</span>
+                </a>
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️</button>
+                <select id="langSelect" onchange="setLanguage(this.value)">
+                    <option value="en">English 🇺🇸</option>
+                    <option value="ar">العربية 🌍</option>
+                    <option value="tr">Türkçe 🇹🇷</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="header-main-content">
+            <h1 id="headerTitle">🚍 Transport Dashboard</h1>
+            <p id="headerDesc" style="color: var(--text-muted);">Click any card to view employee details from its sheet</p>
+        </div>
+    </header>
+
+    <div class="routes-grid" id="routesGrid"></div>
+</div>
+
+<div id="dataModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="modalHeader">
+            <h3 id="modalRouteName" style="margin:0">Employee Details</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <table id="dataTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Configuration ---
+const API_URL = "https://script.google.com/macros/s/AKfycbw2MeknsfN6Ix2JRkfuYzSX-ec9ZDUtQUZMHj5rZO85PMRLjT3G6UQmJIXlP_niF9LMVA/exec"; 
+
+const translations = {
+    en: {
+        dir: "ltr",
+        back: "⬅ Back",
+        headerTitle: "🚍 Transport Dashboard",
+        headerDesc: "Click any card to view employee details from its sheet",
+        distance: "📍 Distance:",
+        time: "⏱️ Time:",
+        seats: "💺 Capacity:",
+        car: "🚐 Vehicle:",
+        employees: "👥 Staff:",
+        perEmp: "💵 Per Staff:",
+        totalCost: "Total Cost:",
+        currency: "EGP",
+        unitDist: "km", unitTime: "min", unitSeats: "Seats",
+        loading: "Loading Data...",
+        modalTitle: "Route Data",
+        stations: {
+            "البيطاش": "Bitash", "فضه": "Fedda", "خيرالله": "Khairallah",
+            "النموذجيه": "Model (Namozagia)", "الهانوفيل": "Hanoville", "مساكن الصينيه": "Chinese Housing",
+            "ابو يوسف": "Abu Youssef", "السلام": "Al Salam", "ابو صابر": "Abu Saber"
+        }
+    },
+    ar: {
+        dir: "rtl",
+        back: "رجوع ➡",
+        headerTitle: "🚍 إدارة خطوط السير",
+        headerDesc: "انقر على أي كارت لعرض كشف الموظفين من الشيت المخصص له",
+        distance: "📍 المسافة:",
+        time: "⏱️ الوقت:",
+        seats: "💺 السعة:",
+        car: "🚐 السيارة:",
+        employees: "👥 عدد الموظفين:",
+        perEmp: "💵 تكلفة الفرد:",
+        totalCost: "التكلفة الكلية:",
+        currency: "ج.م",
+        unitDist: "كم", unitTime: "د", unitSeats: "مقعد",
+        loading: "جاري التحميل...",
+        modalTitle: "بيانات خط",
+        stations: {
+            "البيطاش": "البيطاش", "فضه": "فضه", "خيرالله": "خيرالله",
+            "النموذجيه": "النموذجيه", "الهانوفيل": "الهانوفيل", "مساكن الصينيه": "مساكن الصينيه",
+            "ابو يوسف": "ابو يوسف", "السلام": "السلام", "ابو صابر": "ابو صابر"
+        }
+    },
+    tr: {
+        dir: "ltr",
+        back: "⬅ Geri",
+        headerTitle: "🚍 Güzergah Paneli",
+        headerDesc: "Personel detaylarını görmek için bir karta tıklayın",
+        distance: "📍 Mesafe:",
+        time: "⏱️ Süre:",
+        seats: "💺 Kapasite:",
+        car: "🚐 Araç:",
+        employees: "👥 Personel:",
+        perEmp: "💵 Kişi Başı:",
+        totalCost: "Toplam Maliyet:",
+        currency: "EGP",
+        unitDist: "km", unitTime: "dk", unitSeats: "Koltuk",
+        loading: "Yükleniyor...",
+        modalTitle: "Güzergah Bilgisi",
+        stations: {
+            "البيطاش": "Bitaş", "فضه": "Fidda", "خيرالله": "Hayrullah",
+            "النموذجيه": "Model Alanı", "الهانوفيل": "Hanoville", "مساكن الصينيه": "Çin Evleri",
+            "ابو يوسف": "Ebu Yusuf", "السلام": "Selam", "ابو صابر": "Ebu Sabir"
+        }
+    }
+};
+
+let currentLang = 'en'; 
+
+const routesData = [
+    { name: "البيطاش", dist: 57, time: 55, seats: 28, cost: 2250, perEmp: 107, car: "Bus", employees: 21 },
+    { name: "فضه", dist: 58, time: 59, seats: 14, cost: 2250, perEmp: 225, car: "Coaster", employees: 10 },
+    { name: "خيرالله", dist: 59, time: 64, seats: 28, cost: 2250, perEmp: 80, car: "Hiace", employees: 28 },
+    { name: "النموذجيه", dist: 51, time: 66, seats: 28, cost: 2250, perEmp: 118, car: "Hiace", employees: 19 },
+    { name: "الهانوفيل", dist: 50.5, time: 56, seats: 28, cost: 2250, perEmp: 80, car: "Hiace", employees: 28 },
+    { name: "مساكن الصينيه", dist: 50, time: 53, seats: 28, cost: 2250, perEmp: 102, car: "Hiace", employees: 22 },
+    { name: "ابو يوسف", dist: 49, time: 49, seats: 28, cost: 2250, perEmp: 107, car: "Hiace", employees: 21 },
+    { name: "السلام", dist: 44.5, time: 48, seats: 28, cost: 2250, perEmp: 80, car: "Hiace", employees: 28 },
+    { name: "ابو صابر", dist: 44, time: 46, seats: 14, cost: 2250, perEmp: 281, car: "Hiace", employees: 8 }
+];
+
+// --- Theme Logic ---
+function toggleTheme() {
+    const body = document.documentElement;
+    const isLight = body.getAttribute('data-theme') === 'light';
+    if (isLight) {
+        body.removeAttribute('data-theme');
+        document.getElementById('themeBtn').innerText = '☀️';
+    } else {
+        body.setAttribute('data-theme', 'light');
+        document.getElementById('themeBtn').innerText = '🌙';
+    }
+}
+
+// --- Translation Logic ---
+function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    const html = document.getElementById('htmlPage');
+    
+    html.dir = t.dir;
+    html.lang = lang;
+    
+    document.getElementById('headerTitle').innerText = t.headerTitle;
+    document.getElementById('headerDesc').innerText = t.headerDesc;
+    document.getElementById('btnBackText').innerText = t.back;
+    
+    // Adjust modal header flex direction for RTL
+    document.getElementById('modalHeader').style.flexDirection = t.dir === 'rtl' ? 'row-reverse' : 'row';
+    
+    renderCards();
+}
+
+function renderCards() {
+    const t = translations[currentLang];
+    const grid = document.getElementById('routesGrid');
+    
+    grid.innerHTML = routesData.map(r => `
+        <div class="card" onclick="openModal('${r.name}')">
+            <div class="card-header">${t.stations[r.name]}</div>
+            <div class="stat-row"><span>${t.distance}</span> <strong>${r.dist} ${t.unitDist}</strong></div>
+            <div class="stat-row"><span>${t.time}</span> <strong>${r.time} ${t.unitTime}</strong></div>
+            <div class="stat-row"><span>${t.seats}</span> <strong>${r.seats} ${t.unitSeats}</strong></div>
+            <div class="stat-row"><span>${t.car}</span> <strong>${r.car}</strong></div>
+            <div class="stat-row"><span>${t.employees}</span> <strong>${r.employees}</strong></div>
+            <div class="stat-row"><span>${t.perEmp}</span> <strong>${r.perEmp} ${t.currency}</strong></div>
+            <div class="cost-tag">
+                <span>${t.totalCost}</span>
+                <span>${r.cost} ${t.currency}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- Modal & API Logic ---
+async function openModal(routeName) {
+    const modal = document.getElementById('dataModal');
+    const head = document.getElementById('tableHead');
+    const body = document.getElementById('tableBody');
+    const t = translations[currentLang];
+
+    document.getElementById('modalRouteName').innerText = `${t.modalTitle}: ${t.stations[routeName]}`;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    head.innerHTML = '';
+    body.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:60px; font-size:1.2rem;">${t.loading}</td></tr>`;
+
+    try {
+        const response = await fetch(`${API_URL}?sheet=${encodeURIComponent(routeName)}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const cols = Object.keys(data[0]);
+            head.innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+            body.innerHTML = data.map(row => `<tr>${cols.map(c => `<td>${row[c] || '-'}</td>`).join('')}</tr>`).join('');
+        } else {
+            body.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:60px;">No records found in this sheet.</td></tr>`;
+        }
+    } catch (e) {
+        body.innerHTML = `<tr><td colspan="10" style="color:var(--brand-red); text-align:center; padding:60px;">Error connecting to database. Please check your Script URL.</td></tr>`;
+    }
+}
+
+function closeModal() {
+    document.getElementById('dataModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside content
+window.onclick = function(event) {
+    if (event.target == document.getElementById('dataModal')) closeModal();
+}
+
+// --- Initialize ---
+setLanguage('en');
+</script>
+
+</body>
+</html>

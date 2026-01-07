@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="htmlPage">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubyred Transportation - Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="pic/logooo.png">
+
+<style>
+:root{
+--bg:#0f172a;--card-bg:#1e293b;--header-bg:#1e293b;
+--text-main:#f1f5f9;--text-muted:#94a3b8;
+--border-color:#334155;--brand-dark:#ffffff;
+--brand-red:#d80f0f;--radius:20px;
+--shadow:0 10px 25px -5px rgba(0,0,0,0.3);
+}
+[data-theme="light"]{
+--bg:#f1f5f9;--card-bg:#fff;--header-bg:#fff;
+--text-main:#1e293b;--text-muted:#64748b;
+--border-color:#e2e8f0;--brand-dark:#1e293b;
+--shadow:0 10px 25px -5px rgba(0,0,0,0.05);
+}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text-main);margin:0;padding:10px}
+.container{max-width:1200px;margin:auto}
+header{background:var(--header-bg);padding:20px;border-radius:20px;margin-bottom:30px;border:1px solid var(--border-color)}
+.header-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;border-bottom:2px solid var(--border-color);padding-bottom:15px}
+.logo-section{display:flex;align-items:center;gap:12px}
+.logo-section img{max-width:50px}
+.logo-section h2{margin:0;font-size:1.2rem;font-weight:800}
+.logo-section h2 span{color:var(--brand-red)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+#langSelect,.theme-toggle,.back-btn{
+padding:8px 12px;border-radius:10px;border:1.5px solid var(--border-color);
+background:var(--bg);color:var(--text-main);cursor:pointer;font-weight:600;text-decoration:none
+}
+.routes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-top:25px}
+.card{background:var(--card-bg);border-radius:20px;padding:22px;border:1px solid var(--border-color);cursor:pointer;transition:.3s}
+.card:hover{transform:translateY(-6px);border-color:var(--brand-red)}
+.card-header{font-size:1.3rem;font-weight:700;color:var(--brand-red);margin-bottom:15px}
+.stat-row{display:flex;justify-content:space-between;margin-bottom:8px;border-bottom:1px dashed var(--border-color)}
+.cost-tag{margin-top:12px;padding:10px;border-radius:12px;background:rgba(216,15,15,.1);display:flex;justify-content:space-between;color:var(--brand-red);font-weight:800}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;justify-content:center;align-items:center}
+.modal-content{background:var(--card-bg);width:95%;max-width:1000px;border-radius:20px;overflow:hidden}
+.modal-header{background:var(--brand-red);color:#fff;padding:15px 25px;display:flex;justify-content:space-between;align-items:center}
+.modal-body{max-height:70vh;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:12px;border-bottom:1px solid var(--border-color)}
+th{background:rgba(0,0,0,.2);position:sticky;top:0}
+.close-btn{background:none;border:none;color:#fff;font-size:2rem;cursor:pointer}
+</style>
+</head>
+
+<body>
+<div class="container">
+<header>
+<div class="header-top">
+<div class="logo-section">
+<img src="pic/logooo.png">
+<h2>RUBY<span>RED</span> GARMENT</h2>
+</div>
+<div class="controls">
+<a href="index.html" class="back-btn"><span id="btnBackText">⬅ Back</span></a>
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+<select id="langSelect" onchange="setLanguage(this.value)">
+<option value="en">English</option>
+<option value="ar">العربية</option>
+<option value="tr">Türkçe</option>
+</select>
+</div>
+</div>
+<h1 id="headerTitle">🚍 Transport Dashboard</h1>
+<p id="headerDesc" style="color:var(--text-muted)">Click any card to view employee details</p>
+</header>
+
+<div class="routes-grid" id="routesGrid"></div>
+</div>
+
+<!-- MODAL -->
+<div id="dataModal" class="modal">
+<div class="modal-content">
+<div class="modal-header" id="modalHeader">
+<h3 id="modalRouteName"></h3>
+<button class="close-btn" onclick="closeModal()">&times;</button>
+</div>
+<div class="modal-body">
+<table>
+<thead id="tableHead"></thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbw2MeknsfN6Ix2JRkfuYzSX-ec9ZDUtQUZMHj5rZO85PMRLjT3G6UQmJIXlP_niF9LMVA/exec";
+
+const translations={
+en:{dir:"ltr",back:"⬅ Back",headerTitle:"🚍 Transport Dashboard",headerDesc:"Click any card to view employee details",
+distance:"Distance",time:"Time",seats:"Capacity",car:"Vehicle",employees:"Staff",perEmp:"Per Staff",totalCost:"Total Cost",
+currency:"EGP",unitDist:"km",unitTime:"min",loading:"Loading...",modalTitle:"Route Data",
+stations:{
+"الكينج":"King",
+"الكينج السلام":"King Salam",
+"سفن اب":"7up",
+"مساكن ك 26":"K 26 Housing",
+"مساكن ك 26 برج قديم":"K 26 Housing Old Tower",
+"جهينه ابو تلات":"Juhayna Abu Talat",
+"بهيج":"Bahig",
+"بهيج 2":"Bahig 2",
+"بهيج 3":"Bahig 3"
+},
+vehicle:{Bus:"Bus",Hiace:"Hiace"}
+},
+ar:{dir:"rtl",back:"رجوع ➡",headerTitle:"🚍 إدارة خطوط السير",headerDesc:"اضغط على الكارت لعرض بيانات الموظفين",
+distance:"المسافة",time:"الوقت",seats:"السعة",car:"السيارة",employees:"عدد الموظفين",perEmp:"تكلفة الفرد",totalCost:"التكلفة الكلية",
+currency:"ج.م",unitDist:"كم",unitTime:"د",loading:"جاري التحميل...",modalTitle:"بيانات الخط",
+stations:{
+"الكينج":"الكينج",
+"الكينج السلام":"الكينج السلام",
+"سفن اب":"سفن اب",
+"مساكن ك 26":"مساكن ك 26",
+"مساكن ك 26 برج قديم":"مساكن ك 26 برج قديم",
+"جهينه ابو تلات":"جهينه ابو تلات",
+"بهيج":"بهيج",
+"بهيج 2":"بهيج 2",
+"بهيج 3":"بهيج 3"
+},
+vehicle:{Bus:"أتوبيس",Hiace:"ميكروباص"}
+},
+tr:{dir:"ltr",back:"⬅ Geri",headerTitle:"🚍 Güzergah Paneli",headerDesc:"Detayları görmek için karta tıklayın",
+distance:"Mesafe",time:"Süre",seats:"Kapasite",car:"Araç",employees:"Personel",perEmp:"Kişi Başı",totalCost:"Toplam",
+currency:"EGP",unitDist:"km",unitTime:"dk",loading:"Yükleniyor...",modalTitle:"Güzergah Bilgisi",
+stations:{
+"الكينج":"King",
+"الكينج السلام":"King Salam",
+"سفن اب":"7up",
+"مساكن ك 26":"K 26 Housing",
+"مساكن ك 26 برج قديم":"K 26 Housing Old Tower",
+"جهينه ابو تلات":"Juhayna Abu Talat",
+"بهيج":"Bahig",
+"بهيج 2":"Bahig 2",
+"بهيج 3":"Bahig 3"
+},
+vehicle:{Bus:"Otobüs",Hiace:"Minibüs"}
+}
+};
+
+let currentLang="en";
+
+const routesData=[
+{name:"الكينج",dist:40,time:55,seats:28,cost:2400,perEmp:120,car:"Bus",employees:20},
+{name:"الكينج السلام",dist:42,time:57,seats:28,cost:2450,perEmp:122,car:"Bus",employees:20},
+{name:"سفن اب",dist:45,time:60,seats:28,cost:2500,perEmp:125,car:"Bus",employees:22},
+{name:"مساكن ك 26",dist:48,time:65,seats:28,cost:2600,perEmp:130,car:"Bus",employees:22},
+{name:"مساكن ك 26 برج قديم",dist:50,time:68,seats:28,cost:2650,perEmp:133,car:"Bus",employees:22},
+{name:"جهينه ابو تلات",dist:42,time:58,seats:14,cost:2300,perEmp:115,car:"Hiace",employees:12},
+{name:"بهيج",dist:43,time:60,seats:14,cost:2350,perEmp:118,car:"Hiace",employees:12},
+{name:"بهيج 2",dist:44,time:62,seats:14,cost:2400,perEmp:120,car:"Hiace",employees:12},
+{name:"بهيج 3",dist:45,time:64,seats:14,cost:2450,perEmp:123,car:"Hiace",employees:12}
+];
+
+function toggleTheme(){
+const h=document.documentElement,b=document.getElementById("themeBtn");
+h.getAttribute("data-theme")==="light"?(h.removeAttribute("data-theme"),b.innerText="🌙"):(h.setAttribute("data-theme","light"),b.innerText="☀️");
+}
+
+function renderCards(){
+const t=translations[currentLang];
+document.getElementById("routesGrid").innerHTML=
+routesData.map(r=>`
+<div class="card" onclick="openModal('${r.name}')">
+<div class="card-header">${t.stations[r.name]}</div>
+<div class="stat-row"><span>${t.distance}</span><strong>${r.dist} ${t.unitDist}</strong></div>
+<div class="stat-row"><span>${t.time}</span><strong>${r.time} ${t.unitTime}</strong></div>
+<div class="stat-row"><span>${t.seats}</span><strong>${r.seats}</strong></div>
+<div class="stat-row"><span>${t.car}</span><strong>${t.vehicle[r.car]}</strong></div>
+<div class="stat-row"><span>${t.employees}</span><strong>${r.employees}</strong></div>
+<div class="stat-row"><span>${t.perEmp}</span><strong>${r.perEmp} ${t.currency}</strong></div>
+<div class="cost-tag"><span>${t.totalCost}</span><span>${r.cost} ${t.currency}</span></div>
+</div>`).join("");
+}
+
+function setLanguage(lang){
+currentLang=lang;
+const t=translations[lang];
+document.getElementById("htmlPage").dir=t.dir;
+document.getElementById("headerTitle").innerText=t.headerTitle;
+document.getElementById("headerDesc").innerText=t.headerDesc;
+document.getElementById("btnBackText").innerText=t.back;
+renderCards();
+}
+
+async function openModal(route){
+const t=translations[currentLang];
+document.getElementById("dataModal").style.display="flex";
+document.getElementById("modalRouteName").innerText=`${t.modalTitle} : ${t.stations[route]}`;
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="text-align:center">${t.loading}</td></tr>`;
+try{
+const res=await fetch(`${API_URL}?sheet=${encodeURIComponent(route)}`);
+const data=await res.json();
+if(data.length){
+const cols=Object.keys(data[0]);
+document.getElementById("tableHead").innerHTML=`<tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>`;
+document.getElementById("tableBody").innerHTML=data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]||"-"}</td>`).join("")}</tr>`).join("");
+}else{
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="text-align:center">No records found.</td></tr>`;
+}
+}catch(e){
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="color:red;text-align:center">Error connecting to database.</td></tr>`;
+}
+}
+
+function closeModal(){
+document.getElementById("dataModal").style.display="none";
+}
+
+setLanguage("en");
+</script>
+</body>
+</html>

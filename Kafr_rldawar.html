@@ -1,0 +1,44 @@
+<div class="stat-row"><span>${t.employees}</span><strong>${r.employees}</strong></div>
+<div class="stat-row"><span>${t.perEmp}</span><strong>${r.perEmp} ${t.currency}</strong></div>
+<div class="cost-tag"><span>${t.totalCost}</span><span>${r.cost} ${t.currency}</span></div>
+</div>`).join("");
+}
+
+function setLanguage(lang){
+currentLang=lang;
+const t=translations[lang];
+document.getElementById("htmlPage").dir=t.dir;
+document.getElementById("headerTitle").innerText=t.headerTitle;
+document.getElementById("headerDesc").innerText=t.headerDesc;
+document.getElementById("btnBackText").innerText=t.back;
+renderCards();
+}
+
+async function openModal(route){
+const t=translations[currentLang];
+document.getElementById("dataModal").style.display="flex";
+document.getElementById("modalRouteName").innerText=`${t.modalTitle} : ${t.stations[route]}`;
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="text-align:center;padding:50px">${t.loading}</td></tr>`;
+try{
+const res=await fetch(`${API_URL}?sheet=${encodeURIComponent(route)}`);
+const data=await res.json();
+if(data.length){
+const cols=Object.keys(data[0]);
+document.getElementById("tableHead").innerHTML=`<tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>`;
+document.getElementById("tableBody").innerHTML=data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]||"-"}</td>`).join("")}</tr>`).join("");
+}else{
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="text-align:center;padding:50px">No records found.</td></tr>`;
+}
+}catch(e){
+document.getElementById("tableBody").innerHTML=`<tr><td colspan="10" style="color:var(--brand-red);text-align:center;padding:50px">Error connecting to database.</td></tr>`;
+}
+}
+
+function closeModal(){
+document.getElementById("dataModal").style.display="none";
+}
+
+setLanguage("en");
+</script>
+</body>
+</html>
